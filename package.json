@@ -1,0 +1,22 @@
+{
+  "name": "labs",
+  "version": "0.0.1",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "spikes/*"
+  ],
+  "scripts": {
+    "build": "bun run --filter '*' build",
+    "ci:tsc": "bun run --filter '*' ci:tsc",
+    "dev": "bun run --filter '*' dev",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
