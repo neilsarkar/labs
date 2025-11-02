@@ -1,5 +1,11 @@
 # zig-ffi
 
+Testing out portability of zig FFI with bun
+
+* bun test
+* wasm in webapp
+* bun single file executable with bun:ffi
+
 To install dependencies:
 
 ```bash

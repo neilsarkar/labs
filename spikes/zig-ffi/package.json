@@ -3,6 +3,10 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "build:wasm": "zig build-exe sum.zig -target wasm32-freestanding -O ReleaseSmall -fno-entry -femit-bin=sum.wasm -rdynamic",
+    "check:wasm": "wasm-objdump -x public/sum.wasm"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
