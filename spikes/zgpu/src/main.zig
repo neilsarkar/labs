@@ -55,7 +55,7 @@ pub fn main() !void {
         },
         .{},
     );
-    errdefer gctx.destroy(allocator);
+    defer gctx.destroy(allocator);
 
     const pipeline_layout = gctx.createPipelineLayout(&.{});
     defer gctx.releaseResource(pipeline_layout);
@@ -123,11 +123,12 @@ pub fn main() !void {
         defer commands.release();
 
         gctx.queue.submit(&.{commands});
-        if (gctx.present() == .normal_execution) {
-            std.debug.print("Frame presented\n", .{});
-        } else {
+
+        const present_result = gctx.present();
+        if (present_result == .swap_chain_resized) {
             std.debug.print("Window resized\n", .{});
+
+            @panic("Handle resize properly");
         }
-        // window.swapBuffers();
     }
 }
