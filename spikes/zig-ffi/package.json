@@ -6,7 +6,7 @@
   "scripts": {
     "ci:tsc": "tsc --noEmit",
     "dev": "bun run --watch src/index.ts",
-    "build:wasm": "zig build-exe sum.zig -target wasm32-freestanding -O ReleaseSmall -fno-entry -femit-bin=sum.wasm -rdynamic",
+    "build:wasm": "zig build -p .",
     "check:wasm": "wasm-objdump -x public/sum.wasm"
   },
   "devDependencies": {
