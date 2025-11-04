@@ -1,0 +1,15 @@
+{
+  "name": "bun-ffi",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "zig build-lib add.zig -dynamic -O ReleaseFast"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
