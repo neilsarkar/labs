@@ -1,5 +1,12 @@
 extern "env" fn console_log(ptr: [*]const u8, len: usize) void;
 
+// Imported from JS. Calls the JS function by handle with an optional `this`.
+extern "env" fn __cb(fn_handle: u32) void;
+
+pub export fn step() void {
+    __cb(44);
+}
+
 pub export fn sum(a: i32, b: i32) i32 {
     return a + b;
 }
