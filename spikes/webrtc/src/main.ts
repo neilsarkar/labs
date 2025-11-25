@@ -1,13 +1,18 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: prototyping */
 import { WebSocket } from "partysocket";
 
-const ws = new WebSocket("ws://localhost:3000");
+const remoteWsUrl = "wss://webrtc-divine-glade-8064.fly.dev";
+
+const localWsUrl = "ws://localhost:3000";
+
+const ws = new WebSocket(remoteWsUrl);
 
 type ServerMessage =
   | {
       type: "welcome";
       yourId: string;
       peerIds: string[];
+      serverId: string;
     }
   | {
       type: "message:json";
@@ -69,6 +74,7 @@ ws.addEventListener("message", async (event) => {
     switch (envelope.type) {
       case "welcome":
         ourId = envelope.yourId;
+        console.log("[ws] connected", { serverId: envelope.serverId });
         break;
       case "message:json":
         receive(envelope.message);

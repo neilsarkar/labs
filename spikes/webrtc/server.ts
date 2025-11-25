@@ -2,6 +2,8 @@ console.log("Listening on port 3000...");
 
 const peerIds = new Map<Bun.ServerWebSocket<undefined>, string>();
 
+const serverId = crypto.randomUUID();
+
 Bun.serve({
   fetch(req, server) {
     if (server.upgrade(req)) {
@@ -21,7 +23,6 @@ Bun.serve({
         if (isString) {
           try {
             const json = JSON.parse(message);
-            const messageType = json.type;
             peer.send(
               JSON.stringify({
                 type: "message:json",
@@ -51,6 +52,7 @@ Bun.serve({
           type: "welcome",
           yourId: id,
           peerIds: Array.from(peerIds.values()),
+          serverId,
         })
       );
 
