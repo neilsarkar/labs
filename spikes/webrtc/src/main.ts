@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: prototyping */
 import { WebSocket } from "partysocket";
 
-const remoteWsUrl = "wss://webrtc-divine-glade-8064.fly.dev";
+const remoteWsUrl = "wss://webrtc-divine-glade-8064.fly.dev/ws";
 
 const localWsUrl = "ws://localhost:3000";
 

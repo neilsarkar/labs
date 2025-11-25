@@ -5,11 +5,24 @@ const peerIds = new Map<Bun.ServerWebSocket<undefined>, string>();
 const serverId = crypto.randomUUID();
 
 Bun.serve({
-  fetch(req, server) {
-    if (server.upgrade(req)) {
-      return;
+  async fetch(req, server) {
+    const url = new URL(req.url);
+
+    if (url.pathname === "/ws") {
+      if (server.upgrade(req)) {
+        return;
+      }
+      return new Response("Upgrade failed", { status: 500 });
     }
-    return new Response("Upgrade failed", { status: 500 });
+
+    const path = url.pathname === "/" ? "/index.html" : url.pathname;
+    const filePath = `./dist${path}`;
+    const file = Bun.file(filePath);
+    const exists = await file.exists();
+    if (!exists) {
+      return new Response(`Not found: ${filePath}`, { status: 404 });
+    }
+    return new Response(file);
   },
   websocket: {
     message(ws, message) {

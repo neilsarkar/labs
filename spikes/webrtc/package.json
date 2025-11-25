@@ -5,18 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "bun run build && fly deploy",
+    "run": "docker build -t webrtc . && docker run --rm -p 3000:3000 webrtc"
   },
   "devDependencies": {
     "@types/bun": "^1.3.3",
     "typescript": "~5.9.3",
-    "vite": "^7.2.4",
-    "vue-tsc": "^3.1.5"
+    "vite": "^7.2.4"
   },
   "dependencies": {
-    "@vitejs/plugin-vue": "^6.0.2",
-    "partysocket": "^1.1.6",
-    "vue": "^3.5.25"
+    "partysocket": "^1.1.6"
   }
 }
