@@ -21,8 +21,11 @@
     <div class="logs" x-data="$store.netcode">
       <div class="websocket log">
         <h2>WebSocket</h2>
-        <template x-for="msg in websocketMessages" :key="msg">
-          <pre x-text="msg"></pre>
+        <template x-for="msg in websocketMessages">
+          <div class="msg">
+            <div class="time" x-text="`${format(msg.timestamp)} | ${msg.channel}`"></div>
+            <pre x-text="msg.content"></pre>
+          </div>
         </template>
       </div>
       <template x-for="peer in peers" :key="peer.id">

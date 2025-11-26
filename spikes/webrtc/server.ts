@@ -81,6 +81,9 @@ Bun.serve({
       }
       console.log({ event: "close", id, code, reason });
       peerIds.delete(ws);
+      for (const [peer] of peerIds) {
+        peer.send(JSON.stringify({ type: "peer:disconnect", peerId: id }));
+      }
     },
     drain(ws) {
       console.log({ event: "drain" });

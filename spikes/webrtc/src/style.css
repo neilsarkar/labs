@@ -49,9 +49,18 @@ main {
   overflow: auto;
   height: 100%;
   border: 1px solid black;
+  padding: 1vh 0;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.log > * {
   padding: 1vh 2vw;
 }
 
+.log .msg {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
 
 @media (prefers-color-scheme: light) {
   :root {
