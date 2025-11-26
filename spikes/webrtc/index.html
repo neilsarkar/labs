@@ -5,29 +5,34 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="//unpkg.com/alpinejs" defer></script>
   <title>webrtc</title>
 </head>
 
 <body>
-  <div id="app"></div>
+  <main>
+    <div class="app x-cloak">
+      <div class="messages"></div>
+      <form>
+        <textarea></textarea>
+        <button>send</button>
+      </form>
+    </div>
 
-  <div x-data="{ open: false }">
-    <button @click="open = true">Expand</button>
+    <div class="logs" x-data="$store.netcode">
+      <div class="websocket log">
+        <h2>WebSocket</h2>
+        <template x-for="msg in websocketMessages" :key="msg">
+          <pre x-text="msg"></pre>
+        </template>
+      </div>
+      <template x-for="peer in peers" :key="peer.id">
+        <div class="peer log">
+          <h2 x-text="'Peer ' + peer.id.substring(0, 6)"></h2>
+        </div>
+      </template>
+    </div>
+  </main>
 
-    <span x-show="open">
-      Content...
-    </span>
-  </div>
-
-  <form>
-    <textarea></textarea>
-    <button>send</button>
-  </form>
-
-  <div class="messages">
-
-  </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 

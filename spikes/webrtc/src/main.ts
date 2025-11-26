@@ -1,5 +1,38 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: prototyping */
+import "./style.css";
+import Alpine from "alpinejs";
 import { WebSocket } from "partysocket";
+
+type Peer = {
+  id: string;
+  color: string;
+  messages: string[];
+};
+
+Alpine.store("netcode", {
+  websocketMessages: [],
+  peers: [] as Peer[],
+
+  logWs(message: string) {
+    this.websocketMessages.push(message);
+  },
+
+  addPeer(id: string) {
+    if (this.peers.find((p) => p.id === id)) return;
+    this.peers.push({ id, color: uuidToColor(id), messages: [] });
+  },
+
+  logPeerMessage(peerId: string, message: string) {
+    const peer = this.peers.find((p) => p.id === peerId);
+    if (!peer) {
+      console.warn(`No peer with id ${peerId}`);
+      return;
+    }
+    peer.messages.push(message);
+  },
+});
+
+Alpine.start();
 
 const remoteWsUrl = "wss://webrtc-divine-glade-8064.fly.dev/ws";
 
@@ -70,16 +103,22 @@ ws.addEventListener("message", async (event) => {
 
   try {
     const envelope = JSON.parse(event.data) as ServerMessage;
+    Alpine.store("netcode").logWs(JSON.stringify(envelope, null, 2));
 
     switch (envelope.type) {
       case "welcome":
         ourId = envelope.yourId;
         console.log("[ws] connected", { serverId: envelope.serverId });
+        for (const peerId of envelope.peerIds) {
+          if (peerId === ourId) continue;
+          Alpine.store("netcode").addPeer(peerId);
+        }
         break;
       case "message:json":
         receive(envelope.message);
         break;
       case "peer:connect":
+        Alpine.store("netcode").addPeer(envelope.peerId);
         await makeOffer();
         break;
       default:
@@ -187,7 +226,6 @@ function wireDataChannel() {
   };
 }
 
-// TAB A: call this to start (OFFER side)
 async function makeOffer() {
   const reliable: RTCDataChannelInit = {};
   const unreliable: RTCDataChannelInit = {
@@ -204,7 +242,6 @@ async function makeOffer() {
   console.log("[rtc.pc] created offer, waiting for ICE gathering to finish...");
 }
 
-// TAB B: call this with the OFFER string from tab A
 async function receiveOfferAndMakeAnswer(offerBase64: string) {
   const offer = JSON.parse(atob(offerBase64));
   await pc.setRemoteDescription(offer);
@@ -219,7 +256,6 @@ async function receiveOfferAndMakeAnswer(offerBase64: string) {
   });
 }
 
-// TAB A: call this with the ANSWER string from tab B
 async function receiveAnswer(answerBase64: string) {
   const answer = JSON.parse(atob(answerBase64));
   await pc.setRemoteDescription(answer);
@@ -238,3 +274,14 @@ document.querySelector("form")?.addEventListener("submit", (e) => {
   }
   dc.send(msg);
 });
+
+function uuidToColor(uuid: string): string {
+  const hex = uuid.replace(/-/g, "");
+  let hash = 0;
+  for (let i = 0; i < hex.length; i++) {
+    hash = (hash << 5) - hash + hex.charCodeAt(i);
+    hash |= 0;
+  }
+  const color = (hash >>> 0).toString(16).padStart(6, "0").slice(0, 6);
+  return `#${color}`;
+}
