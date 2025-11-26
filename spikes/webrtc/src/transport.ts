@@ -136,9 +136,14 @@ export function listenForOffers(ws: WebSocket, cb: (pipe: WebRtcPipe) => void) {
     const offer = JSON.parse(atob(msg.payload));
     const pc = new RTCPeerConnection({ iceServers });
 
+    const gatherIcePromise = gatherIce(pc, 10000);
+
     await pc.setRemoteDescription(offer);
+    netcode.logRtc("set remote description");
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
+    netcode.logRtc("set local description");
+    await gatherIcePromise;
 
     const channels = {
       reliable: null as RTCDataChannel | null,

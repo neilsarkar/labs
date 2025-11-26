@@ -31,9 +31,32 @@ function registerPipe(pipe: WebRtcPipe) {
   logPeerConnection(pipe.peerConnection, netcode.ourId);
 
   pipe.reliable.onmessage = (event) => {
-    netcode.logRtc(`[reliable ${pipe.peerId}] ${event.data}`, pipe.peerId);
+    const peer = netcode.peers.find((p) => p.id === pipe.peerId);
+    if (peer) {
+      peer.messages.push({
+        timestamp: Date.now(),
+        channel: "reliable",
+        content: event.data,
+        from: pipe.peerId,
+        to: netcode.ourId,
+      });
+    } else {
+      netcode.logRtc(`[reliable ${pipe.peerId}] ${event.data}`, pipe.peerId);
+    }
   };
   pipe.unreliable.onmessage = (event) => {
+    const peer = netcode.peers.find((p) => p.id === pipe.peerId);
+    if (peer) {
+      peer.messages.push({
+        timestamp: Date.now(),
+        channel: "unreliable",
+        content: event.data,
+        from: pipe.peerId,
+        to: netcode.ourId,
+      });
+    } else {
+      netcode.logRtc(`[reliable ${pipe.peerId}] ${event.data}`, pipe.peerId);
+    }
     netcode.logRtc(`[unreliable ${pipe.peerId}] ${event.data}`, pipe.peerId);
   };
   pipes.set(pipe.peerId, pipe);
@@ -109,9 +132,21 @@ document.querySelector("form")?.addEventListener("submit", (e) => {
   for (const [, pipe] of pipes) {
     const dc = pipe.reliable;
     if (dc.readyState !== "open") {
-      console.warn("[rtc.dc] datachannel not open yet");
+      console.warn(`[rtc.dc] datachannel not open yet for ${pipe.peerId}`);
       continue;
     }
     dc.send(msg);
+    const peer = netcode.peers.find((p) => p.id === pipe.peerId);
+    if (peer) {
+      peer.messages.push({
+        timestamp: Date.now(),
+        channel: "reliable",
+        content: msg,
+        from: netcode.ourId,
+        to: pipe.peerId,
+      });
+    } else {
+      netcode.logRtc(`[send ${pipe.peerId}] ${msg}`, pipe.peerId);
+    }
   }
 });

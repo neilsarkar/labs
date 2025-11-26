@@ -20,7 +20,7 @@
 
     <div class="logs" x-data="$store.netcode">
       <div class="websocket log">
-        <h2>WebSocket</h2>
+        <h2>WebSocket <span x-text="ourId.substring(0, 6)"></span></h2>
         <template x-for="msg in websocketMessages">
           <div class="msg">
             <div class="time" x-text="`${format(msg.timestamp)} | ${msg.channel}`"></div>
@@ -31,6 +31,12 @@
       <template x-for="peer in peers" :key="peer.id">
         <div class="peer log">
           <h2 x-text="'Peer ' + peer.id.substring(0, 6)"></h2>
+          <template x-for="msg in peer.messages" :key="msg.timestamp">
+            <div class="msg">
+              <div class="time" x-text="`${format(msg.timestamp)} | ${msg.channel}`"></div>
+              <pre x-text="`${msg.from === ourId ? '&gt;' : '&lt;'} ${msg.content}`"></pre>
+            </div>
+          </template>
         </div>
       </template>
     </div>
