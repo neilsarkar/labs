@@ -25,6 +25,46 @@ pub fn one(path: []const u8) !u32 {
     return zero_count;
 }
 
+pub fn two(path: []const u8) !u64 {
+    const contents = try std.fs.cwd().readFileAlloc(path, std.heap.page_allocator, .unlimited);
+    defer std.heap.page_allocator.free(contents);
+
+    var ranges = std.mem.tokenizeScalar(u8, contents, ',');
+    var sum: u64 = 0;
+    while (ranges.next()) |range| {
+        var nice = std.mem.splitScalar(u8, range, '-');
+        const start_str = nice.next() orelse return error.InvalidRange;
+        const end_str = nice.next() orelse return error.InvalidRange;
+
+        std.debug.print("|{s}|\n", .{start_str});
+        const start_num = try std.fmt.parseInt(u64, std.mem.trim(u8, start_str, " \t\n\r"), 10);
+        const end_num = try std.fmt.parseInt(u64, std.mem.trim(u8, end_str, " \t\n\r"), 10);
+        var num = start_num;
+        while (num <= end_num) : (num += 1) {
+            const id_str = std.fmt.allocPrint(std.heap.page_allocator, "{d}", .{num}) catch return error.AllocationFailed;
+            defer std.heap.page_allocator.free(id_str);
+
+            if (is_invalid_id(id_str)) {
+                std.debug.print("Invalid ID: {s}\n", .{id_str});
+                sum += num;
+            }
+        }
+    }
+    return sum;
+}
+
+fn is_invalid_id(id: []const u8) bool {
+    var i: u32 = 0;
+    while (i < id.len / 2) : (i += 1) {
+        const pattern = id[0 .. i + 1];
+        var seq = std.mem.tokenizeSequence(u8, id, pattern);
+        if (seq.peek() == null) {
+            return true;
+        }
+    }
+    return false;
+}
+
 fn count_zeroes(start: u32, end: i32) u32 {
     var count: u32 = 0;
     const multi_wrap = @abs(@divTrunc(end, 100));
@@ -45,6 +85,11 @@ test "day 1" {
 
     const result2 = try one("data/1.txt");
     std.debug.print("Day 1 result: {}\n", .{result2});
+}
+
+test "day 2" {
+    const result = try two("data/2.txt");
+    std.debug.print("Day 2 result: {}\n", .{result});
 }
 
 test "edge cases" {
@@ -71,4 +116,11 @@ test "edge cases" {
         // std.debug.print("{d} @abs(@divTrunc) {d} = {d} (expected {d})\n", .{ a, b, c, expected });
         try std.testing.expectEqual(expected, c);
     }
+}
+
+test "huh" {
+    const id0 = "1698522";
+    const id1 = "1698528";
+    _ = try std.fmt.parseInt(u32, id0, 10);
+    _ = try std.fmt.parseInt(u32, id1, 10);
 }
