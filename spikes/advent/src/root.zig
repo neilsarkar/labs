@@ -1,28 +1,84 @@
 //! By convention, root.zig is the root source file when making a library.
 const std = @import("std");
 
-pub fn one(path: []const u8) !u32 {
+pub fn three(path: []const u8, comptime num_batteries: usize) !u64 {
     const contents = try std.fs.cwd().readFileAlloc(path, std.heap.page_allocator, .unlimited);
     defer std.heap.page_allocator.free(contents);
 
     var lines = std.mem.tokenizeScalar(u8, contents, '\n');
-
-    var dial: i32 = 50;
-    var zero_count: u32 = 0;
+    var joltages = try std.ArrayList(u64).initCapacity(std.heap.page_allocator, 1024);
+    defer joltages.deinit(std.heap.page_allocator);
 
     while (lines.next()) |line| {
-        const num = try std.fmt.parseInt(u32, line[1..], 10);
-        const was: u32 = @intCast(dial);
-        switch (line[0]) {
-            'L' => dial -= @intCast(num),
-            'R' => dial += @intCast(num),
-            else => return error.InvalidDirection,
+        const trimmed = std.mem.trim(u8, line, " \t\r\n");
+        var start_index: usize = 0;
+        var end_index = trimmed.len - num_batteries + 1;
+        var bank: [num_batteries]u64 = undefined;
+        @memset(&bank, 0);
+        for (0..num_batteries) |battery_index| {
+            const result = try find_max_digit(trimmed, start_index, end_index);
+            // std.debug.print("battery_index={d} result={} start_index={d} end_index={d}\n", .{ battery_index, result, start_index, end_index });
+            bank[battery_index] = result.value;
+            start_index = result.index + 1;
+            end_index += 1;
         }
-        const delta = count_zeroes(was, dial);
-        dial = @mod(dial, 100);
-        zero_count += delta;
+        var result: u64 = 0;
+        for (bank, 0..) |b, i| {
+            result += b * std.math.pow(u64, 10, @intCast(num_batteries - i - 1));
+        }
+        try joltages.append(std.heap.page_allocator, result);
+        // std.debug.print("trimmed={s} number={d}\n", .{ trimmed, result });
     }
-    return zero_count;
+
+    var sum: u64 = 0;
+    for (joltages.items) |j| {
+        sum += @intCast(j);
+        // std.debug.print("Joltage: {d}\n", .{j});
+    }
+    return sum;
+}
+
+const MaxDigitResult = struct {
+    value: u32,
+    index: usize,
+};
+
+fn find_max_digit(num_str: []const u8, start_index: usize, end_index: usize) !MaxDigitResult {
+    var result: MaxDigitResult = .{ .value = 0, .index = 0 };
+    var i: usize = start_index;
+    while (i < end_index) : (i += 1) {
+        const c = num_str[i];
+        if (!std.ascii.isDigit(c)) @panic("Non-digit character encountered");
+        const digit = c - '0';
+        // std.debug.print("i={d} c={c} digit={d}\n", .{ i, c, digit });
+        if (digit > result.value) {
+            result.value = digit;
+            result.index = i;
+        }
+    }
+    return result;
+}
+
+test "day 3" {
+    {
+        const result = try three("data/3.sample.txt", 2);
+        try std.testing.expectEqual(357, result);
+    }
+
+    {
+        const result = try three("data/3.txt", 2);
+        try std.testing.expectEqual(17281, result);
+    }
+
+    {
+        const result = try three("data/3.sample.txt", 12);
+        try std.testing.expectEqual(3121910778619, result);
+    }
+
+    {
+        const result = try three("data/3.txt", 12);
+        try std.testing.expectEqual(0, result);
+    }
 }
 
 pub fn two(path: []const u8) !u64 {
@@ -65,6 +121,35 @@ fn is_invalid_id(id: []const u8) bool {
     return false;
 }
 
+// test "day 2" {
+//     const result = try two("data/2.txt");
+//     std.debug.print("Day 2 result: {}\n", .{result});
+// }
+
+pub fn one(path: []const u8) !u32 {
+    const contents = try std.fs.cwd().readFileAlloc(path, std.heap.page_allocator, .unlimited);
+    defer std.heap.page_allocator.free(contents);
+
+    var lines = std.mem.tokenizeScalar(u8, contents, '\n');
+
+    var dial: i32 = 50;
+    var zero_count: u32 = 0;
+
+    while (lines.next()) |line| {
+        const num = try std.fmt.parseInt(u32, line[1..], 10);
+        const was: u32 = @intCast(dial);
+        switch (line[0]) {
+            'L' => dial -= @intCast(num),
+            'R' => dial += @intCast(num),
+            else => return error.InvalidDirection,
+        }
+        const delta = count_zeroes(was, dial);
+        dial = @mod(dial, 100);
+        zero_count += delta;
+    }
+    return zero_count;
+}
+
 fn count_zeroes(start: u32, end: i32) u32 {
     var count: u32 = 0;
     const multi_wrap = @abs(@divTrunc(end, 100));
@@ -79,18 +164,13 @@ fn count_zeroes(start: u32, end: i32) u32 {
     return count;
 }
 
-test "day 1" {
-    // const result = try one("data/1.sample.txt");
-    // try std.testing.expectEqual(3, result);
+// test "day 1" {
+//     const result = try one("data/1.sample.txt");
+//     try std.testing.expectEqual(3, result);
 
-    const result2 = try one("data/1.txt");
-    std.debug.print("Day 1 result: {}\n", .{result2});
-}
-
-test "day 2" {
-    const result = try two("data/2.txt");
-    std.debug.print("Day 2 result: {}\n", .{result});
-}
+//     const result2 = try one("data/1.txt");
+//     std.debug.print("Day 1 result: {}\n", .{result2});
+// }
 
 test "edge cases" {
     const test_cases = .{
@@ -116,11 +196,4 @@ test "edge cases" {
         // std.debug.print("{d} @abs(@divTrunc) {d} = {d} (expected {d})\n", .{ a, b, c, expected });
         try std.testing.expectEqual(expected, c);
     }
-}
-
-test "huh" {
-    const id0 = "1698522";
-    const id1 = "1698528";
-    _ = try std.fmt.parseInt(u32, id0, 10);
-    _ = try std.fmt.parseInt(u32, id1, 10);
 }
