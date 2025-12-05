@@ -1,6 +1,119 @@
 //! By convention, root.zig is the root source file when making a library.
 const std = @import("std");
 
+pub fn four(path: []const u8, multi_pass: bool) !u32 {
+    const contents = try std.fs.cwd().readFileAlloc(path, std.heap.page_allocator, .unlimited);
+    defer std.heap.page_allocator.free(contents);
+
+    var lines = std.mem.tokenizeScalar(u8, contents, '\n');
+    var cols: usize = 0;
+    var rows: usize = 0;
+    var rolls = try std.ArrayList(u8).initCapacity(std.heap.page_allocator, 1024);
+    defer rolls.deinit(std.heap.page_allocator);
+
+    var index: usize = 0;
+    while (lines.next()) |line| {
+        const trimmed = std.mem.trim(u8, line, " \t\r\n");
+        for (trimmed) |c| {
+            switch (c) {
+                '.' => try rolls.append(std.heap.page_allocator, 0),
+                '@' => try rolls.append(std.heap.page_allocator, 1),
+                else => @panic("Invalid character in input"),
+            }
+            index += 1;
+        }
+        if (rows == 0) {
+            rows = rolls.items.len;
+        }
+        cols += 1;
+    }
+
+    std.debug.print("rows={d} cols={d}\n", .{ rows, cols });
+
+    var count: u32 = 0;
+
+    var indices_to_remove = try std.ArrayList(usize).initCapacity(std.heap.page_allocator, 1024);
+    defer indices_to_remove.deinit(std.heap.page_allocator);
+    outer: while (true) {
+        for (rolls.items, 0..) |roll, i| {
+            if ((i) % cols == 0) {
+                std.debug.print("\n", .{});
+            }
+
+            if (roll == 0) {
+                std.debug.print(".", .{});
+                continue;
+            }
+            const score = try get_roll_score(rolls.items, rows, cols, i);
+            if (score < 4) {
+                try indices_to_remove.append(std.heap.page_allocator, i);
+                count += 1;
+            }
+            const c: u8 = if (score < 4) 'X' else '@';
+            std.debug.print("{c}", .{c});
+        }
+
+        if (!multi_pass or indices_to_remove.items.len == 0) {
+            std.debug.print("BREAKING OUTER {}", .{indices_to_remove.items.len});
+            break :outer;
+        }
+
+        for (indices_to_remove.items) |i| {
+            rolls.items[i] = 0;
+        }
+        indices_to_remove.clearRetainingCapacity();
+    }
+    return count;
+}
+
+fn get_roll_score(rolls: []const u8, rows: usize, cols: usize, index: usize) !u8 {
+    const width: i32 = @intCast(cols);
+
+    const deltas = [_][2]i32{
+        .{ -1, -1 }, .{ -1, 0 }, .{ -1, 1 },
+        .{ 0, -1 },  .{ 0, 1 },  .{ 1, -1 },
+        .{ 1, 0 },   .{ 1, 1 },
+    };
+
+    const row: i32 = @intCast(index / cols);
+    const col: i32 = @intCast(index % cols);
+
+    var score: u8 = 0;
+    for (deltas) |d| {
+        const target_row = row + d[0];
+        const target_col = col + d[1];
+        if (target_row < 0 or target_row >= rows) continue;
+        if (target_col < 0 or target_col >= cols) continue;
+
+        const target_index: usize = @intCast(target_row * width + target_col);
+        score += if (rolls[target_index] > 0) 1 else 0;
+    }
+
+    return score;
+}
+
+test "day 4" {
+    {
+        const result = try four("data/4.sample.txt", false);
+        try std.testing.expectEqual(13, result);
+    }
+
+    {
+        const result = try four("data/4.txt", false);
+        try std.testing.expectEqual(1449, result);
+    }
+
+    {
+        const result = try four("data/4.sample.txt", true);
+        try std.testing.expectEqual(43, result);
+    }
+
+    {
+        const result = try four("data/4.txt", true);
+        try std.testing.expectEqual(8746, result);
+    }
+}
+
 pub fn three(path: []const u8, comptime num_batteries: usize) !u64 {
     const contents = try std.fs.cwd().readFileAlloc(path, std.heap.page_allocator, .unlimited);
     defer std.heap.page_allocator.free(contents);
@@ -77,7 +190,7 @@ test "day 3" {
 
     {
         const result = try three("data/3.txt", 12);
-        try std.testing.expectEqual(0, result);
+        try std.testing.expectEqual(171388730430281, result);
     }
 }
 
