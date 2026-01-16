@@ -1,0 +1,19 @@
+{
+  "name": "playwright-webgpu",
+  "version": "0.0.1",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch index.ts",
+    "test": "bunx playwright test",
+    "ci:tsc": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

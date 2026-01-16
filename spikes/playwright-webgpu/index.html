@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WebGPU Hello Triangle</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #1a1a1a;
+    }
+    canvas {
+      width: 512px;
+      height: 512px;
+    }
+    #error {
+      color: #ff6b6b;
+      font-family: monospace;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="512" height="512"></canvas>
+  <div id="error"></div>
+  <script type="module" src="./webgpu.ts"></script>
+</body>
+</html>

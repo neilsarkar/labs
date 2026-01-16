@@ -1,0 +1,81 @@
+name: Playwright WebGPU Test
+
+on:
+  push:
+    paths:
+      - 'spikes/playwright-webgpu/**'
+      - '.github/workflows/playwright-webgpu.yml'
+  pull_request:
+    paths:
+      - 'spikes/playwright-webgpu/**'
+      - '.github/workflows/playwright-webgpu.yml'
+  workflow_dispatch:
+
+jobs:
+  test-macos:
+    name: Test WebGPU on macOS
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: spikes/playwright-webgpu
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install chromium
+
+      - name: Run Playwright tests
+        run: bunx playwright test
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-macos
+          path: spikes/playwright-webgpu/playwright-report/
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-macos
+          path: spikes/playwright-webgpu/screenshots/
+
+  test-linux:
+    name: Test WebGPU on Linux
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: spikes/playwright-webgpu
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install chromium
+
+      - name: Run Playwright tests with xvfb
+        run: xvfb-run --auto-servernum bunx playwright test
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-linux
+          path: spikes/playwright-webgpu/playwright-report/
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-linux
+          path: spikes/playwright-webgpu/screenshots/
